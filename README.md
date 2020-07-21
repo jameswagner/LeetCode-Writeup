@@ -49,7 +49,7 @@ To post a tweet, add that tweet to the list of tweets by that user (also create 
     }
 ```
 
-Following and unfollowing involve adding or removing the followed person to the set. Adding a user more than once to a set or attempting to remove a user not present in the set are no-op operations so we don't need to explicitly check for these cases. In the case of following we also need to add the follower to the set of users if they are not already present. 
+Following and unfollowing involve adding or removing the followed person to the follower's Set of users. Adding a user more than once to a Set or attempting to remove a user not present in the Set are already no-op operations so we don't need to explicitly check for these cases. In the case of following we also need to add the follower to the set of users if they are not already present. 
 ```
     /** Follower follows a followee. If the operation is invalid, it should be a no-op. */
     public void follow(int followerId, int followeeId) {
@@ -73,6 +73,10 @@ Following and unfollowing involve adding or removing the followed person to the 
     }
 ```
 
+Get news feed involves the most computation. With each user's Tweets being sorted in a List by timestamp, getting the most 10 most recent has some similarity with [Merge k Sorted lists](https://leetcode.com/problems/merge-k-sorted-lists/). We go with a Priority Queue (Heap) data structure to order the relevant Tweets by timestamp.
+
+In this implementation, the Tweets are not directly put on the Priority Queue, but rather a two element int array with the first element being the id of the User who posted the Tweet and the second the index of the element. This allows comparison of Tweets by timestamp while at the same time allowing quick lookup of the User of the Tweet when it is polled from the Queue, so the next most recent Tweet of the user can be easily found. An alternative could have been to include Id of the User in the Tweet data model itself but this would lead to a two-way association / cyclic dependency between Tweet and User which is avoided by not including this reference, given that User already includes a list of Tweets in its data structure. 
+
 
 ```
     /** Retrieve the 10 most recent tweet ids in the user's news feed. Each item in the news feed must be posted by users who the user followed or by the user herself. Tweets must be ordered from most recent to least recent. */
@@ -82,17 +86,21 @@ Following and unfollowing involve adding or removing the followed person to the 
         {
             return newsFeed;
         }
+        User user = users.get(userId);
         PriorityQueue<int[]> tweetPQ = new PriorityQueue<int[]>((a,b) -> users.get(b[0]).tweets.get(b[1]).timestamp - users.get(a[0]).tweets.get(a[1]).timestamp); // Priority Queue with most recent tweet
+```
 
-        Set<Integer> followees = users.get(userId).following; // Get all followees
+After initialization, we go through each followee and then the User, for each one adding their most recent Tweet (if any) to the Priority Queue
+
+```
+        Set<Integer> followees = user.following; // Get all followees
         
-        for(Integer followeeId:followees) { // get tweets of each followee
-            if(this.users.containsKey(followeeId)) { // does followee have a list of tweets
+        for(Integer followeeId:followees) { 
+            if(this.users.containsKey(followeeId)) {
                 List<Tweet> tweets = users.get(followeeId).tweets;
-                if(tweets.size()<1) { 
-                    continue;
+                if(tweets.size()>0) { 
+                  tweetPQ.offer(new int[]{followeeId,tweets.size()-1}); // add followee's most recent tweet to PQ
                 }
-                tweetPQ.offer(new int[]{followeeId,tweets.size()-1}); // add followee's most recent tweet to PQ
             }
         }
         
@@ -100,22 +108,24 @@ Following and unfollowing involve adding or removing the followed person to the 
         if(tweets.size()>0) { // list should not be empty with this API
             tweetPQ.offer(new int[]{userId,tweets.size()-1}); // add user's most recent tweet to PQ
         }
-                    
-        while(!tweetPQ.isEmpty() && newsFeed.size() < 10)
-        {
+```
+
+Now we get the most recent Tweet from the Queue, add it to our return List, and add the next most recent by the User, (if any). Repeat 10 times or until we run out of eligible Tweets. Then the news feed is ready to return.
+```
+        while(!tweetPQ.isEmpty() && newsFeed.size() < 10)  {
             int[] tweetIndices = tweetPQ.poll();
-            Tweet tweet = users.get(tweetIndices[0]).tweets.get(tweetIndices[1]);
+            Tweet tweet = users.get(tweetIndices[0]).tweets.get(tweetIndices[1]); //Look up the Tweet by User and index.
             newsFeed.add(tweet.id);
             Integer followeeId = tweetIndices[0];
             
-            if(tweetIndices[1]>0) // add it to the priority queue (if it exists)
-            {
+            
+         // decrement List index and add back to the PriorityQueue, if there are still more   
+            if(tweetIndices[1]>0) {
                 tweetIndices[1]--;
                 tweetPQ.offer(tweetIndices);
             }
         }
         return newsFeed;
-        
     }
 
     
