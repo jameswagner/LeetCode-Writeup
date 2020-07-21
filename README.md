@@ -127,6 +127,12 @@ Now we get the most recent Tweet from the Queue, add it to our return List, and 
         }
         return newsFeed;
     }
+```
+Complexity
+1) Twitter overall consists of a HashMap of Users with each being a List of Tweets, so these data structures will both grow linearly. 
 
-    
+2) Posting a Tweet - Constant time appending to List of User's Tweets 
 
+3) Follow and Unfollow - Assuming constant time lookup of the followee's id in the follower's HashSet, these are both constant time operations.
+
+4) Newsfeed - If the User is following n people, the additional Priority Queue data structure will have at most 1 entry per person. Entries are fixed at arrays of 2 elements, so the space will be O(n) with respect to number of following users. Keeping the Priority Queue's heap structure such that the most recent Tweet is the next one to be polled is logarithmic for each element added or removed. The initialization will require n additions to the priority queue so this initialiation will be an O(n log n) operation. After this if we treat the 10 additional times a Tweet is removed and the User's next most recent one addded as a constant, these 10 subsequent additionals and removals will be O(log n) complexity, so the Newsfeed generation is overall O(n log n) time complexity. 
