@@ -129,7 +129,7 @@ Now we get the most recent Tweet from the Queue, add it to our return List, and 
     }
 ```
 Complexity
-1) Twitter overall consists of a HashMap of Users with each being a List of Tweets, so these data structures will both grow linearly. 
+1) Twitter overall consists of a HashMap of Users with each being a List of Tweets, so these data structures will both grow in a linear fashion with respect to numbers of Users and Tweets, respectively.
 
 2) Posting a Tweet - Constant time appending to List of User's Tweets 
 
