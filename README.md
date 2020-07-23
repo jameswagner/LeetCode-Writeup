@@ -131,8 +131,12 @@ Now we get the most recent Tweet from the Queue, add it to our return List, and 
 Complexity
 1) Twitter overall consists of a HashMap of Users with each being a List of Tweets, so these data structures will both grow in a linear fashion with respect to numbers of Users and Tweets, respectively.
 
-2) Posting a Tweet - Constant time appending to List of User's Tweets 
+2) Posting a Tweet - Constant time (amortized with Array resizing) appending to List of User's Tweets 
 
 3) Follow and Unfollow - Assuming constant time lookup of the followee's id in the follower's HashSet, these are both constant time operations.
 
 4) Newsfeed - If the User is following n people, the additional Priority Queue data structure will have at most 1 entry per person. Entries are fixed at arrays of 2 elements, so the space will be O(n) with respect to number of following users. Keeping the Priority Queue's heap structure such that the most recent Tweet is the next one to be polled is logarithmic for each element added or removed. The initialization will require n additions to the priority queue so this initialiation will be an O(n log n) operation. After this if we treat the 10 additional times a Tweet is removed and the User's next most recent one addded as a constant, these 10 subsequent additionals and removals will be O(log n) complexity, so the Newsfeed generation is overall O(n log n) time complexity. 
+
+
+
+Note on this approach - this did lead to a couple of design decisions that gave worse performance for both memory and time with LeetCode's performance analysis engine, but I think are decisions that would evaluated more favorably in an interview. As already discussed an alternate approach which gave better time performance would be to include the User id in the Tweet data structure, and then keep in getNewsFeed a HashMap where keys are user ids and values are the index of the last Tweet added to the Priority Queue for that user. This asymptotically would give the same performance but saved on time and memory presumably due to avoiding creating 2 element array structures, but introduced a cyclic dependency between Tweet and User. More surprisingly, 
